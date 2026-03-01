@@ -20,8 +20,15 @@
 #![no_std]
 
 pub mod bus;
+
+// Modules qui dépendent du PAC stm32f4 (registres ARM) :
+// uniquement compilés pour la cible ARM (bare-metal).
+// Sur x86_64 (cargo test sur la machine hôte), ces modules sont exclus.
+#[cfg(target_arch = "arm")]
 pub mod i2c;
+#[cfg(target_arch = "arm")]
 pub mod spi;
+#[cfg(target_arch = "arm")]
 pub mod uart;
 
 pub mod sensors {
@@ -31,5 +38,7 @@ pub mod sensors {
 
 // hal_mock est disponible dans les tests (cfg test compile pour host)
 // et quand la feature "mock" est active (ex: simulateurs, CI)
-#[cfg(any(test, feature = "mock"))]
+// hal_mock est disponible quand la feature "mock" est active :
+// `cargo test --features mock`
+#[cfg(feature = "mock")]
 pub mod hal_mock;

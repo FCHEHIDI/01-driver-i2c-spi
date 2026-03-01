@@ -27,33 +27,12 @@ use stm32f4::stm32f411::{GPIOA, RCC, USART2};
 // Newtype partagé
 // --------------------------------------------------------------------------- //
 
-/// Fréquence d'horloge en Hz – newtype pour éviter les confusions d'unité.
-///
-/// Exemple : `ClockHz(16_000_000)` pour 16 MHz HSI.
-#[derive(Debug, Clone, Copy)]
-pub struct ClockHz(pub u32);
-
-// --------------------------------------------------------------------------- //
-// Constantes
-// --------------------------------------------------------------------------- //
+// ClockHz et compute_brr sont définis dans bus.rs (aucune dépendance PAC)
+// et réexportés ici pour la compatibilité des imports existants.
+pub use crate::bus::{ClockHz, compute_brr};
 
 /// BRR pour 115 200 baud @ 16 MHz HSI (oversampling × 16)
 const BRR_115200_16MHZ: u32 = 0x008A_000E; // mantisse=0x8A, fraction=0xE
-
-/// Calcule dynamiquement le BRR depuis la fréquence APB1 et le baud souhaité.
-///
-/// # Paramètres
-/// - `apb1_hz` : fréquence de l'horloge APB1 en Hz
-/// - `baud`    : vitesse en bauds cible
-///
-/// Le résultat est encodé en `[15:4] mantisse | [3:0] fraction/16`.
-pub fn compute_brr(apb1_hz: ClockHz, baud: u32) -> u32 {
-    // USARTDIV × 16 pour garder la précision entière
-    let div_x16 = (apb1_hz.0 + baud / 2) / baud; // arrondi au plus proche
-    let mantissa = div_x16 >> 4;
-    let fraction = div_x16 & 0xF;
-    (mantissa << 4) | fraction
-}
 
 // --------------------------------------------------------------------------- //
 // Type d'état (typestate pattern)

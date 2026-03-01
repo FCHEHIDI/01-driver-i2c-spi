@@ -11,7 +11,7 @@
 //! cargo test --features mock
 //! ```
 
-use driver_i2c_spi::spi::{SpiDiv, SpiError};
+use driver_i2c_spi::bus::{compute_brr, ClockHz, SpiDiv, SpiError};
 
 // =========================================================================== //
 // Tests SpiDiv – valeurs CR1 BR[2:0] (RM0383 §20.5.1)
@@ -70,28 +70,29 @@ fn spi_error_debug_format() {
 // Tests BRR UART (compute_brr)
 // =========================================================================== //
 
-use driver_i2c_spi::uart::{compute_brr, ClockHz};
-
 #[test]
 fn uart_brr_115200_at_16mhz() {
-    // USARTDIV = 16_000_000 / 115_200 ≈ 138.88
-    // mantisse = 138 = 0x8A, fraction = round(0.88 × 16) = 14 = 0xE
-    // BRR = (138 << 4) | 14 = 0x08AE
+    // STM32 USART (OVER8=0) : baud = f_CK / (16 × USARTDIV)
+    // USARTDIV = 16_000_000 / (16 × 115_200) = 8.68...
+    // → BRR encodé en [15:4] mantisse + [3:0] fraction :
+    //   div16 = round(USARTDIV × 16) = round(138.88) = 139
+    //   mantisse = 139 >> 4 = 8, fraction = 139 & 0xF = 11
+    //   BRR = (8 << 4) | 11 = 0x08B = 139
     let brr = compute_brr(ClockHz(16_000_000), 115_200);
     let mantissa = (brr >> 4) & 0xFFF;
     let fraction = brr & 0xF;
-    assert_eq!(mantissa, 138, "Mantisse attendue 138");
-    assert_eq!(fraction, 14,  "Fraction attendue 14");
+    assert_eq!(mantissa, 8,  "Mantisse attendue 8 (USARTDIV entier)");
+    assert_eq!(fraction, 11, "Fraction attendue 11 (0.68 × 16 arrondi)");
 }
 
 #[test]
 fn uart_brr_9600_at_16mhz() {
-    // USARTDIV = 16_000_000 / 9_600 = 1666.66... → 1667
+    // USARTDIV = 16_000_000 / (16 × 9_600) = 104.17
+    // div16 = round(104.17 × 16) = 1667
     // mantisse = 1667 >> 4 = 104, fraction = 1667 & 0xF = 3
     let brr = compute_brr(ClockHz(16_000_000), 9_600);
     let mantissa = (brr >> 4) & 0xFFF;
-    // Peu importe la valeur exacte, vérifier la plage de raisonnabilité
-    assert!(mantissa > 100, "Mantisse devrait être > 100 pour 9600 baud @ 16 MHz");
+    assert_eq!(mantissa, 104, "Mantisse attendue 104 pour 9600 baud @ 16 MHz");
 }
 
 #[test]

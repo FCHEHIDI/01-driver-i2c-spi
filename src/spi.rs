@@ -32,39 +32,9 @@
 use core::marker::PhantomData;
 use stm32f4::stm32f411::{GPIOA, RCC, SPI1};
 
-// --------------------------------------------------------------------------- //
-// Erreurs
-// --------------------------------------------------------------------------- //
-
-/// Erreurs possibles lors d'une transaction SPI.
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
-pub enum SpiError {
-    /// Timeout : TXE ou RXNE non levé dans le délai imparti.
-    Timeout,
-    /// Overrun : un octet reçu n'a pas été lu avant d'en recevoir un autre.
-    Overrun,
-    /// Mode Fault détecté (conflit de maîtres).
-    ModeFault,
-}
-
-// --------------------------------------------------------------------------- //
-// Diviseur d'horloge
-// --------------------------------------------------------------------------- //
-
-/// Diviseur de fréquence SPI (BR[2:0] dans CR1).
-///
-/// La fréquence résultante est `APB2 / diviseur`.
-#[derive(Debug, Clone, Copy)]
-pub enum SpiDiv {
-    Div2   = 0b000,
-    Div4   = 0b001,
-    Div8   = 0b010,
-    Div16  = 0b011,
-    Div32  = 0b100,
-    Div64  = 0b101,
-    Div128 = 0b110,
-    Div256 = 0b111,
-}
+// SpiError et SpiDiv sont définis dans bus.rs (sans dépendance PAC)
+// et réexportés ici pour la compatibilité des imports existants.
+pub use crate::bus::{SpiDiv, SpiError};
 
 // --------------------------------------------------------------------------- //
 // Timeout

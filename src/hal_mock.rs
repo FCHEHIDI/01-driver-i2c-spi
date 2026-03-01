@@ -227,9 +227,9 @@ impl I2cBus for MockI2c {
 // ClockHz (type utilitaire partagé)
 // --------------------------------------------------------------------------- //
 
-/// Réexport de [`crate::uart::ClockHz`] pour éviter de l'importer séparément
+/// Réexport de [`crate::bus::ClockHz`] pour éviter de l'importer séparément
 /// dans les tests.
-pub use crate::uart::ClockHz;
+pub use crate::bus::ClockHz;
 
 // --------------------------------------------------------------------------- //
 // Tests internes du mock lui-même

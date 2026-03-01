@@ -12,6 +12,25 @@
 // Newtypes communs
 // --------------------------------------------------------------------------- //
 
+/// Fréquence d'horloge en Hz.
+///
+/// Exemple : `ClockHz(16_000_000)` pour 16 MHz HSI.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub struct ClockHz(pub u32);
+
+/// Calcule la valeur du registre BRR (Baud Rate Register) pour l'USART.
+///
+/// Formule : `BRR = apb_hz / baud`
+/// - Les 4 bits bas encodent la fraction (× 16).
+/// - Les bits supérieurs encodent la mantisse entière.
+pub fn compute_brr(apb1_hz: ClockHz, baud: u32) -> u32 {
+    // USARTDIV × 16 pour garder la précision entière (arrondi au plus proche)
+    let div_x16 = (apb1_hz.0 + baud / 2) / baud;
+    let mantissa = div_x16 >> 4;
+    let fraction = div_x16 & 0xF;
+    (mantissa << 4) | fraction
+}
+
 /// Adresse 7 bits d'un périphérique I2C (non décalée).
 ///
 /// Exemple : `I2cAddr(0x76)` pour le BME280 avec SDO à GND.
@@ -41,6 +60,36 @@ pub enum I2cError {
     ArbitrationLost,
     /// Erreur de bus détectée (START/STOP invalide).
     BusError,
+}
+
+// --------------------------------------------------------------------------- //
+// Types SPI partagés (pas de dépendance PAC)
+// --------------------------------------------------------------------------- //
+
+/// Erreurs possibles lors d'une transaction SPI.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum SpiError {
+    /// Timeout : TXE ou RXNE non levé dans le délai imparti.
+    Timeout,
+    /// Overrun : un octet reçu n'a pas été lu avant d'en recevoir un autre.
+    Overrun,
+    /// Mode Fault détecté (conflit de maîtres).
+    ModeFault,
+}
+
+/// Diviseur de fréquence SPI (BR[2:0] dans CR1).
+///
+/// La fréquence résultante est `APB2 / diviseur`.
+#[derive(Debug, Clone, Copy)]
+pub enum SpiDiv {
+    Div2   = 0b000,
+    Div4   = 0b001,
+    Div8   = 0b010,
+    Div16  = 0b011,
+    Div32  = 0b100,
+    Div64  = 0b101,
+    Div128 = 0b110,
+    Div256 = 0b111,
 }
 
 // --------------------------------------------------------------------------- //

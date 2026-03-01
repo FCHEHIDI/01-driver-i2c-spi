@@ -150,6 +150,7 @@ pub struct Mpu6050Measurement {
 // --------------------------------------------------------------------------- //
 
 /// Driver niveau applicatif pour le MPU6050.
+#[derive(Debug)]
 pub struct Mpu6050 {
     addr: I2cAddr,
     accel_range: AccelRange,
@@ -193,6 +194,7 @@ impl Mpu6050 {
         // --- 5. Configurer la plage du gyroscope ---
         i2c.write(addr, &[REG_GYRO_CONFIG, gyro_range.config_bits()])?;
 
+        #[cfg(target_arch = "arm")]
         defmt::info!(
             "MPU6050 @ 0x{:02x} : accel=±{}g gyro=±{}°/s",
             addr.0,

@@ -73,6 +73,7 @@ impl From<I2cError> for Bme280Error {
 ///
 /// Tous sont signés/non-signés selon la datasheet §4.2.2 (trim parameters).
 #[allow(non_snake_case)]
+#[derive(Debug)]
 struct Calib {
     // Temperature
     dig_T1: u16,
@@ -117,6 +118,7 @@ pub struct Bme280Measurement {
 // --------------------------------------------------------------------------- //
 
 /// Driver niveau applicatif pour le capteur BME280.
+#[derive(Debug)]
 pub struct Bme280 {
     addr: I2cAddr,
     calib: Calib,
@@ -153,10 +155,11 @@ impl Bme280 {
             if retries == 0 {
                 return Err(Bme280Error::NvmTimeout);
             }
-            // Petite attente
-            for _ in 0..1000 {
-                cortex_m::asm::nop();
-            }
+            // Petite attente (nop sur ARM, boucle vide sur hôte x86)
+            #[cfg(target_arch = "arm")]
+            for _ in 0..1000 { cortex_m::asm::nop(); }
+            #[cfg(not(target_arch = "arm"))]
+            for _ in 0..1000 { core::hint::spin_loop(); }
         }
 
         // --- 4. Lire les coefficients de calibration ---
@@ -174,6 +177,7 @@ impl Bme280 {
         // [7:5]=010 [4:2]=101 [1:0]=11 → 0b0101_0111 = 0x57
         i2c.write(addr, &[REG_CTRL_MEAS, 0x57])?;
 
+        #[cfg(target_arch = "arm")]
         defmt::info!("BME280 initialisé @ addr=0x{:02x}", addr.0);
 
         Ok(Bme280 { addr, calib })
@@ -228,6 +232,7 @@ impl Bme280 {
     ///
     /// # Errors
     /// [`Bme280Error::Bus`] si une erreur I2C survient.
+    #[allow(non_snake_case)]
     pub fn read(&mut self, i2c: &mut impl I2cBus) -> Result<Bme280Measurement, Bme280Error> {
         // Lire 8 octets depuis 0xF7 :
         // [0..2] = press (msb, lsb, xlsb)   [3..5] = temp   [6..7] = hum
@@ -308,29 +313,33 @@ impl Bme280 {
     }
 
     /// Retourne l'humidité en centièmes de %RH.
+    ///
+    /// Utilise `i64` pour les intermédiaires afin d'éviter les dépassements
+    /// que le C laisse silencieusement déborder sur `int32_t`.
     #[allow(non_snake_case)]
     fn compensate_hum(&self, adc_H: u32, t_fine: i32) -> u32 {
         let c = &self.calib;
-        let adc_H = adc_H as i32;
+        let adc_H = adc_H as i64;
+        let t_fine = t_fine as i64;
 
-        let x: i32 = t_fine - 76_800;
+        let x: i64 = t_fine - 76_800;
         if x == 0 {
             return 0;
         }
 
         let x = (adc_H << 14)
-              - ((c.dig_H4 as i32) << 20)
-              - ((c.dig_H5 as i32) * x);
+              - ((c.dig_H4 as i64) << 20)
+              - ((c.dig_H5 as i64) * x);
         let x = (x + 16_384) >> 15;
         let x = x * ((((
-                    ((x * (c.dig_H6 as i32)) >> 10)
-                    * (((x * (c.dig_H3 as i32)) >> 11) + 32_768)
+                    ((x * (c.dig_H6 as i64)) >> 10)
+                    * (((x * (c.dig_H3 as i64)) >> 11) + 32_768)
                    ) >> 10)
-                   + 2_097_152) * (c.dig_H2 as i32)
+                   + 2_097_152) * (c.dig_H2 as i64)
                    + 8_192)
                   >> 14;
-        let x = x - (((((x >> 15) * (x >> 15)) >> 7) * (c.dig_H1 as i32)) >> 4);
-        let x = x.clamp(0, 419_430_400);
+        let x = x - (((((x >> 15) * (x >> 15)) >> 7) * (c.dig_H1 as i64)) >> 4);
+        let x = x.clamp(0, 419_430_400_i64);
 
         // Résultat en Q22.10 → diviser par 1024 donne %RH × 1000
         // On ramène en centièmes : × 100 / 1000 = / 10

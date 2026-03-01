@@ -197,17 +197,21 @@ fn bme280_read_returns_compensated_values() {
     let mut m = mock_with_bme280_init_responses();
     let mut bme = Bme280::init(&mut m, I2cAddr(0x76)).unwrap();
 
-    // Valeurs brutes réalistes pour T=25.00°C, P≈1013 hPa, H≈50%
-    // (depuis datasheet Bosch exemples de calcul §4.2.3)
-    // adc_T = 519888, adc_P = 415148, adc_H = 29317
-    // En 3 registres H/M/L 20 bits pour T et P, 16 bits pour H :
-    //   press: 0x65258 >> ? On encode en 8 octets : [P_MSB, P_LSB, P_XLSB, T_MSB, T_LSB, T_XLSB, H_MSB, H_LSB]
-    // adc_P = 415148 = 0x65558
-    let raw_p_msb  = 0x06; let raw_p_lsb  = 0x55; let raw_p_xlsb = 0x80; // 0x65558 << 4 → [0x06,0x55,0x80]
-    // adc_T = 519888 = 0x7F110
-    let raw_t_msb  = 0x07; let raw_t_lsb  = 0xF1; let raw_t_xlsb = 0x10;
-    // adc_H = 29317 = 0x7285
-    let raw_h_msb  = 0x72; let raw_h_lsb  = 0x85;
+    // Valeurs brutes réalistes pour T≈25°C, P≈1013 hPa, H≈50%
+    // La reconstruction : adc_T = (MSB << 12) | (LSB << 4) | (XLSB >> 4)
+    //
+    // adc_T = 519888 = 0x7EED0
+    //   MSB  = 0x7EED0 >> 12     = 0x7E
+    //   LSB  = (0x7EED0 >> 4) & 0xFF = 0xED
+    //   XLSB = (0x7EED0 & 0xF) << 4  = 0x00
+    let raw_t_msb = 0x7Eu8; let raw_t_lsb = 0xEDu8; let raw_t_xlsb = 0x00u8;
+
+    // adc_P = 415148 = 0x655AC
+    //   MSB  = 0x65, LSB = 0x5A, XLSB = 0xC0
+    let raw_p_msb = 0x65u8; let raw_p_lsb = 0x5Au8; let raw_p_xlsb = 0xC0u8;
+
+    // adc_H = 29317 = 0x7285 (16 bits)
+    let raw_h_msb = 0x72u8; let raw_h_lsb = 0x85u8;
     m.expect_read(&[raw_p_msb, raw_p_lsb, raw_p_xlsb,
                     raw_t_msb, raw_t_lsb, raw_t_xlsb,
                     raw_h_msb, raw_h_lsb]);

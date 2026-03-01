@@ -7,26 +7,32 @@ edition = "2021"
 # Bin cible bare-metal – on exclut les tests natifs du binaire embarqué
 # --------------------------------------------------------------------------- #
 [[bin]]
-name  = "driver-i2c-spi"
-test  = false
-bench = false
+name              = "driver-i2c-spi"
+test              = false
+bench             = false
+# Ce binaire ne peut être compilé que pour la cible ARM.
+# `cargo test --features mock` ne passera pas cette feature → binaire ignoré.
+# Pour flasher : `cargo build --features embed` (puis `cargo embed --features embed`).
+required-features = ["embed"]
 
 # --------------------------------------------------------------------------- #
 # Dépendances
 # --------------------------------------------------------------------------- #
 [dependencies]
 # PAC (Peripheral Access Crate) généré par svd2rust – registres STM32F411
-stm32f4 = { version = "0.15", features = ["stm32f411", "critical-section"] }
+stm32f4 = { version = "0.15", features = ["stm32f411"] }
 
 # Support Cortex-M (NVIC, SysTick, instructions barrière…)
 cortex-m    = { version = "0.7", features = ["critical-section-single-core"] }
 cortex-m-rt = "0.7"   # vecteurs d'interruption, stack, reset handler
 
-# Logging embarqué via RTT (pas de semi-hosting)
-defmt     = "0.3"
-defmt-rtt = "0.4"
+# Logging embarqué (macros defmt – compilable partout)
+defmt = "0.3"
 
-# Gestion des panics → affiche la trace via defmt puis bloque
+# Transport RTT + gestionnaire de panic – UNIQUEMENT sur cible ARM
+# (non compilés lors de `cargo test --target x86_64-*`)
+[target.'cfg(target_arch = "arm")'.dependencies]
+defmt-rtt   = "0.4"
 panic-probe = { version = "0.3", features = ["print-defmt"] }
 
 # --------------------------------------------------------------------------- #
@@ -41,6 +47,8 @@ name = "driver_i2c_spi"
 [features]
 # Active le module hal_mock sur la machine hôte (tests, simulateurs)
 mock = []
+# Doit être passé pour compiler le binaire embarqué (évite la compilation x86)
+embed = []
 
 # --------------------------------------------------------------------------- #
 # Tests d'intégration (s'exécutent sur la machine hôte, pas sur la cible)
