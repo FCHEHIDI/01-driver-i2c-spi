@@ -1,11 +1,12 @@
 //! # I2C1 – Driver bas niveau
 //!
-//! Implémente le maître I2C1 du STM32F411 directement sur les registres PAC.
+//! Implémente le maître I2C1 du STM32F411 directement sur les registres PAC,
+//! et expose le trait [`crate::bus::I2cBus`] pour les capteurs et les tests.
 //!
 //! ## Câblage (Nucleo-F411RE)
 //! ```
-//! PB6  →  I2C1_SCL  (AF4, open-drain, pull-up 4.7 kΩ)
-//! PB7  →  I2C1_SDA  (AF4, open-drain, pull-up 4.7 kΩ)
+//! PB6  →  I2C1_SCL  (AF4, open-drain, pull-up externe 4.7 kΩ)
+//! PB7  →  I2C1_SDA  (AF4, open-drain, pull-up externe 4.7 kΩ)
 //! ```
 //!
 //! ## Calculs de timing (APB1 = 16 MHz HSI)
@@ -19,58 +20,27 @@
 //!
 //! ### Fast mode (Fm, 400 kHz, duty = 0 → Tlow/Thigh = 2)
 //! ```
-//! CCR    = 13  = 16_000_000 / (3 × 400_000)   (duty=0: Thigh=CCR, Tlow=2×CCR)
+//! CCR    = 13  = 16_000_000 / (3 × 400_000)
 //! TRISE  = 6   = floor(300 ns / 62.5 ns) + 1  (max rise time Fm = 300 ns)
 //! ```
 
 use core::marker::PhantomData;
 use stm32f4::stm32f411::{GPIOB, I2C1, RCC};
 
-// --------------------------------------------------------------------------- //
-// Newtypes – typage fort pour éviter les confusions
-// --------------------------------------------------------------------------- //
-
-/// Adresse 7 bits d'un périphérique I2C.
-///
-/// Contient l'adresse **non décalée** (bits [6:0]).
-/// Exemple : `I2cAddr(0x76)` pour BME280.
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
-pub struct I2cAddr(pub u8);
-
-/// Adresse d'un registre interne d'un composant I2C.
-///
-/// Exemple : `RegAddr(0xF3)` pour le registre de statut du BME280.
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
-pub struct RegAddr(pub u8);
+// Réexports pratiques depuis le module bus (évite d'importer deux modules)
+pub use crate::bus::{I2cAddr, I2cBus, I2cError, RegAddr};
 
 // --------------------------------------------------------------------------- //
 // Fréquence du bus
 // --------------------------------------------------------------------------- //
 
-/// Fréquence du bus I2C.
+/// Fréquence de l'horloge I2C.
 #[derive(Debug, Clone, Copy)]
 pub enum I2cFreq {
     /// Mode standard – 100 kHz (RM0383 tableau 80)
     Standard,
     /// Mode rapide   – 400 kHz (RM0383 tableau 81)
     Fast,
-}
-
-// --------------------------------------------------------------------------- //
-// Erreurs
-// --------------------------------------------------------------------------- //
-
-/// Erreurs possibles lors d'une transaction I2C.
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
-pub enum I2cError {
-    /// L'esclave n'a pas répondu (NACK sur l'adresse ou une donnée).
-    Nack,
-    /// Timeout : le flag attendu n'est pas levé dans le délai imparti.
-    Timeout,
-    /// Erreur d'arbitrage : un autre maître a pris le bus.
-    ArbitrationLost,
-    /// Erreur de bus (START/STOP mal placé détecté par le périphérique).
-    BusError,
 }
 
 // --------------------------------------------------------------------------- //
@@ -363,5 +333,25 @@ impl I2c1<Ready> {
 
         // Phase READ : RESTART → SLA+R → octets
         self.read(addr, buf)
+    }
+}
+// --------------------------------------------------------------------------- //
+// impl I2cBus for I2c1<Ready>
+// --------------------------------------------------------------------------- //
+
+impl I2cBus for I2c1<Ready> {
+    fn write(&mut self, addr: I2cAddr, data: &[u8]) -> Result<(), I2cError> {
+        I2c1::write(self, addr, data)
+    }
+    fn read(&mut self, addr: I2cAddr, buf: &mut [u8]) -> Result<(), I2cError> {
+        I2c1::read(self, addr, buf)
+    }
+    fn write_read(
+        &mut self,
+        addr: I2cAddr,
+        reg: RegAddr,
+        buf: &mut [u8],
+    ) -> Result<(), I2cError> {
+        I2c1::write_read(self, addr, reg, buf)
     }
 }

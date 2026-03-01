@@ -21,7 +21,7 @@
 //! - Pression    : **centièmes de hPa** (ex. 101325 → 1013.25 hPa)
 //! - Humidité    : **centièmes de %RH** (ex. 4863 → 48.63 %)
 
-use crate::i2c::{I2cAddr, I2cError, I2cFreq, RegAddr, I2c1, Ready};
+use crate::bus::{I2cAddr, I2cBus, I2cError, RegAddr};
 
 // --------------------------------------------------------------------------- //
 // Constantes de registres (BME280 datasheet §4.2.2)
@@ -130,7 +130,7 @@ impl Bme280 {
     ///
     /// # Errors
     /// [`Bme280Error::InvalidChipId`] si le composant ne répond pas avec `0x60`.
-    pub fn init(i2c: &mut I2c1<Ready>, addr: I2cAddr) -> Result<Self, Bme280Error> {
+    pub fn init(i2c: &mut impl I2cBus, addr: I2cAddr) -> Result<Self, Bme280Error> {
         // --- 1. Vérifier chip_id ---
         let mut id = [0u8; 1];
         i2c.write_read(addr, RegAddr(REG_CHIP_ID), &mut id)?;
@@ -181,7 +181,7 @@ impl Bme280 {
 
     /// Lit les coefficients de calibration depuis les registres internes.
     #[allow(non_snake_case)]
-    fn read_calib(i2c: &mut I2c1<Ready>, addr: I2cAddr) -> Result<Calib, Bme280Error> {
+    fn read_calib(i2c: &mut impl I2cBus, addr: I2cAddr) -> Result<Calib, Bme280Error> {
         // Bloc 1 : 0x88..0x9F – 24 octets (T et P)
         let mut b = [0u8; 24];
         i2c.write_read(addr, RegAddr(REG_CALIB_00), &mut b)?;
@@ -228,7 +228,7 @@ impl Bme280 {
     ///
     /// # Errors
     /// [`Bme280Error::Bus`] si une erreur I2C survient.
-    pub fn read(&mut self, i2c: &mut I2c1<Ready>) -> Result<Bme280Measurement, Bme280Error> {
+    pub fn read(&mut self, i2c: &mut impl I2cBus) -> Result<Bme280Measurement, Bme280Error> {
         // Lire 8 octets depuis 0xF7 :
         // [0..2] = press (msb, lsb, xlsb)   [3..5] = temp   [6..7] = hum
         let mut raw = [0u8; 8];

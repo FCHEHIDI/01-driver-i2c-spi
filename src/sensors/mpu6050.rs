@@ -29,7 +29,7 @@
 //! - Rotation     : **centièmes de °/s** (ex. 12345 → 123.45 °/s)
 //! - Température  : **centièmes de °C** (ex. 2153 → 21.53 °C)
 
-use crate::i2c::{I2cAddr, I2cError, RegAddr, I2c1, Ready};
+use crate::bus::{I2cAddr, I2cBus, I2cError, RegAddr};
 
 // --------------------------------------------------------------------------- //
 // Registres (MPU6050 Register Map rev 4.2)
@@ -167,7 +167,7 @@ impl Mpu6050 {
     /// # Errors
     /// [`Mpu6050Error::InvalidWhoAmI`] si le registre WHO_AM_I ≠ `0x68`.
     pub fn init(
-        i2c: &mut I2c1<Ready>,
+        i2c: &mut impl I2cBus,
         addr: I2cAddr,
         accel_range: AccelRange,
         gyro_range: GyroRange,
@@ -212,7 +212,7 @@ impl Mpu6050 {
     ///
     /// # Errors
     /// [`Mpu6050Error::Bus`] si une erreur I2C survient.
-    pub fn read(&mut self, i2c: &mut I2c1<Ready>) -> Result<Mpu6050Measurement, Mpu6050Error> {
+    pub fn read(&mut self, i2c: &mut impl I2cBus) -> Result<Mpu6050Measurement, Mpu6050Error> {
         let mut raw = [0u8; 14];
         i2c.write_read(self.addr, RegAddr(REG_ACCEL_XOUT_H), &mut raw)?;
 

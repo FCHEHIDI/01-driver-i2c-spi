@@ -19,6 +19,7 @@
 
 #![no_std]
 
+pub mod bus;
 pub mod i2c;
 pub mod spi;
 pub mod uart;
@@ -28,7 +29,7 @@ pub mod sensors {
     pub mod mpu6050;
 }
 
-// hal_mock est compilé seulement lors des tests (cfg(test))
-// ou explicitement demandé – il n'a pas de code hardware
+// hal_mock est disponible dans les tests (cfg test compile pour host)
+// et quand la feature "mock" est active (ex: simulateurs, CI)
 #[cfg(any(test, feature = "mock"))]
 pub mod hal_mock;
