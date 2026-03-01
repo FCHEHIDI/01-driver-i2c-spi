@@ -1,0 +1,18 @@
+# .cargo/config.toml
+#
+# Configuration Cargo pour la cross-compilation bare-metal Cortex-M4F
+# Appliquée automatiquement dans ce workspace.
+
+[build]
+# Cortex-M4 avec FPU matérielle (hard-float)
+target = "thumbv7em-none-eabihf"
+
+[target.thumbv7em-none-eabihf]
+# Passe memory.x au linker via cortex-m-rt
+rustflags = [
+    "-C", "link-arg=-Tlink.x",   # script fourni par cortex-m-rt
+    "-C", "link-arg=-Tdefmt.x",  # section RTT pour defmt
+]
+
+# Commande de flash/run via probe-rs
+runner = "probe-rs run --chip STM32F411RETx"

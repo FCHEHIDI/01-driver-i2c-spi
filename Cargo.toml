@@ -1,0 +1,56 @@
+[package]
+name    = "driver-i2c-spi"
+version = "0.1.0"
+edition = "2021"
+
+# --------------------------------------------------------------------------- #
+# Bin cible bare-metal – on exclut les tests natifs du binaire embarqué
+# --------------------------------------------------------------------------- #
+[[bin]]
+name  = "driver-i2c-spi"
+test  = false
+bench = false
+
+# --------------------------------------------------------------------------- #
+# Dépendances
+# --------------------------------------------------------------------------- #
+[dependencies]
+# PAC (Peripheral Access Crate) généré par svd2rust – registres STM32F411
+stm32f4 = { version = "0.15", features = ["stm32f411", "critical-section"] }
+
+# Support Cortex-M (NVIC, SysTick, instructions barrière…)
+cortex-m    = { version = "0.7", features = ["critical-section-single-core"] }
+cortex-m-rt = "0.7"   # vecteurs d'interruption, stack, reset handler
+
+# Logging embarqué via RTT (pas de semi-hosting)
+defmt     = "0.3"
+defmt-rtt = "0.4"
+
+# Gestion des panics → affiche la trace via defmt puis bloque
+panic-probe = { version = "0.3", features = ["print-defmt"] }
+
+# --------------------------------------------------------------------------- #
+# Bibliothèque (réutilisable dans les tests)
+# --------------------------------------------------------------------------- #
+[lib]
+name = "driver_i2c_spi"
+
+# --------------------------------------------------------------------------- #
+# Tests d'intégration (s'exécutent sur la machine hôte, pas sur la cible)
+[dev-dependencies]
+# Rien de spécial, les mocks sont dans src/hal_mock.rs
+
+# --------------------------------------------------------------------------- #
+# Profils
+# --------------------------------------------------------------------------- #
+[profile.dev]
+opt-level = 1       # léger opt pour ne pas avoir des traces démesurées
+
+[profile.release]
+opt-level = "z"     # taille minimale – important sur Flash 512 KiB
+debug     = true    # garde les symboles de débogage même en release
+lto       = true
+
+# Profil utilisé par `cargo embed` / probe-rs
+[profile.release.package."*"]
+opt-level = "z"

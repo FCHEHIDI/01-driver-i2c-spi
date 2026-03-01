@@ -1,0 +1,26 @@
+# Embed.toml – configuration de `cargo embed` (probe-rs)
+#
+# Cible : STM32F411RETx (Nucleo-F411RE)
+# Flasher : ST-LINK v2-1 intégré à la carte Nucleo
+#
+# Usage :
+#   cargo embed --release          ← flash + affiche les logs RTT
+#   cargo embed --release --chip STM32F411RETx
+
+[default.general]
+chip = "STM32F411RETx"
+
+[default.flashing]
+enabled       = true
+halt_afterwards = false     # laisser tourner après le flash
+
+[default.reset]
+enabled         = true
+halt_afterwards = false
+
+[default.rtt]
+enabled = true
+timeout = 3000              # attente max RTT en ms
+
+[default.gdb]
+enabled = false             # activer si débogage GDB nécessaire
