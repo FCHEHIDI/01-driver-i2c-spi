@@ -36,6 +36,13 @@ panic-probe = { version = "0.3", features = ["print-defmt"] }
 name = "driver_i2c_spi"
 
 # --------------------------------------------------------------------------- #
+# Features
+# --------------------------------------------------------------------------- #
+[features]
+# Active le module hal_mock sur la machine hôte (tests, simulateurs)
+mock = []
+
+# --------------------------------------------------------------------------- #
 # Tests d'intégration (s'exécutent sur la machine hôte, pas sur la cible)
 [dev-dependencies]
 # Rien de spécial, les mocks sont dans src/hal_mock.rs
