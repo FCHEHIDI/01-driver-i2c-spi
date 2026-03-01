@@ -1,3 +1,36 @@
+<table cellspacing="0" cellpadding="0" style="border-spacing:0;line-height:0">
+  <tr>
+    <td style="padding:0;line-height:0"><img src="assets/stm32neon.png" width="120" style="display:block"/></td>
+    <td style="padding:0;line-height:0"><img src="assets/stm32neon.png" width="120" style="display:block"/></td>
+    <td style="padding:0;line-height:0"><img src="assets/stm32neon.png" width="120" style="display:block"/></td>
+    <td style="padding:0;line-height:0"><img src="assets/stm32neon.png" width="120" style="display:block"/></td>
+    <td style="padding:0;line-height:0"><img src="assets/stm32neon.png" width="120" style="display:block"/></td>
+    <td style="padding:0;line-height:0"><img src="assets/stm32neon.png" width="120" style="display:block"/></td>
+    <td style="padding:0;line-height:0"><img src="assets/stm32neon.png" width="120" style="display:block"/></td>
+    <td style="padding:0;line-height:0"><img src="assets/stm32neon.png" width="120" style="display:block"/></td>
+  </tr>
+  <tr>
+    <td style="padding:0;line-height:0"><img src="assets/stm32neon.png" width="120" style="display:block"/></td>
+    <td style="padding:0;line-height:0"><img src="assets/stm32neon.png" width="120" style="display:block"/></td>
+    <td style="padding:0;line-height:0"><img src="assets/stm32neon.png" width="120" style="display:block"/></td>
+    <td style="padding:0;line-height:0"><img src="assets/stm32neon.png" width="120" style="display:block"/></td>
+    <td style="padding:0;line-height:0"><img src="assets/stm32neon.png" width="120" style="display:block"/></td>
+    <td style="padding:0;line-height:0"><img src="assets/stm32neon.png" width="120" style="display:block"/></td>
+    <td style="padding:0;line-height:0"><img src="assets/stm32neon.png" width="120" style="display:block"/></td>
+    <td style="padding:0;line-height:0"><img src="assets/stm32neon.png" width="120" style="display:block"/></td>
+  </tr>
+  <tr>
+    <td style="padding:0;line-height:0"><img src="assets/stm32neon.png" width="120" style="display:block"/></td>
+    <td style="padding:0;line-height:0"><img src="assets/stm32neon.png" width="120" style="display:block"/></td>
+    <td style="padding:0;line-height:0"><img src="assets/stm32neon.png" width="120" style="display:block"/></td>
+    <td style="padding:0;line-height:0"><img src="assets/stm32neon.png" width="120" style="display:block"/></td>
+    <td style="padding:0;line-height:0"><img src="assets/stm32neon.png" width="120" style="display:block"/></td>
+    <td style="padding:0;line-height:0"><img src="assets/stm32neon.png" width="120" style="display:block"/></td>
+    <td style="padding:0;line-height:0"><img src="assets/stm32neon.png" width="120" style="display:block"/></td>
+    <td style="padding:0;line-height:0"><img src="assets/stm32neon.png" width="120" style="display:block"/></td>
+  </tr>
+</table>
+
 # driver-i2c-spi
 
 Driver I2C / SPI / UART bare-metal pour le **STM32F411 (Nucleo-F411RE)**, écrit
